@@ -282,7 +282,7 @@ const Index = () => {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+                  className="border-2 border-white text-white hover:bg-white hover:text-eco-700 transition-all duration-300 backdrop-blur-sm font-semibold"
                 >
                   <Link to="/rewards" className="flex items-center gap-2">
                     <Award className="h-5 w-5" />
