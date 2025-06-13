@@ -281,8 +281,7 @@ const Index = () => {
                 <Button
                   asChild
                   size="lg"
-                  variant="outline"
-                  className="border-2 border-white text-white hover:bg-white hover:text-eco-700 transition-all duration-300 backdrop-blur-sm font-semibold"
+                  className="bg-white/10 border-2 border-white text-white hover:bg-white hover:text-eco-700 transition-all duration-300 backdrop-blur-md font-semibold shadow-lg"
                 >
                   <Link to="/rewards" className="flex items-center gap-2">
                     <Award className="h-5 w-5" />
