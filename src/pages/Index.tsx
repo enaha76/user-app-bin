@@ -15,6 +15,8 @@ import {
   Smartphone,
   QrCode,
   Image,
+  Play,
+  Award,
 } from "lucide-react";
 
 const features = [
@@ -268,11 +270,10 @@ const Index = () => {
                 <Button
                   asChild
                   size="lg"
-                  variant="secondary"
-                  className="bg-white text-eco-700 hover:bg-gray-50"
+                  className="bg-white text-eco-700 hover:bg-gray-50 shadow-lg"
                 >
-                  <Link to="/report" className="flex items-center">
-                    <Smartphone className="mr-2 h-4 w-4" />
+                  <Link to="/report" className="flex items-center gap-2">
+                    <Camera className="h-5 w-5" />
                     Start Reporting Now
                   </Link>
                 </Button>
@@ -281,9 +282,12 @@ const Index = () => {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-white/20 text-white hover:bg-white/10"
+                  className="border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
                 >
-                  <Link to="/rewards">View Rewards</Link>
+                  <Link to="/rewards" className="flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    View Rewards
+                  </Link>
                 </Button>
               </div>
 
