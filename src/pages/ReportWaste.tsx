@@ -102,12 +102,15 @@ const ReportWaste = () => {
     }
   };
 
+  const [isScanning, setIsScanning] = useState(false);
+
   const handleQRScan = async () => {
+    setIsScanning(true);
     setIsLoading(true);
 
     try {
-      // Simulate QR code scanning
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Simulate camera opening and QR scanning process
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       setFormData((prev) => ({
         ...prev,
@@ -122,6 +125,7 @@ const ReportWaste = () => {
       toast.error("Failed to scan QR code");
     } finally {
       setIsLoading(false);
+      setIsScanning(false);
     }
   };
 
@@ -264,33 +268,93 @@ const ReportWaste = () => {
               </TabsContent>
 
               <TabsContent value="qr" className="space-y-4">
-                <div className="text-center py-8">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-nature-100">
-                    <QrCode className="h-8 w-8 text-nature-600" />
+                {!isScanning ? (
+                  <div className="text-center py-8">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-nature-100">
+                      <QrCode className="h-8 w-8 text-nature-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">Scan QR Code</h3>
+                    <p className="text-gray-600 mb-6">
+                      Scan the QR code on the waste bin for precise
+                      identification
+                    </p>
+                    <Button
+                      onClick={handleQRScan}
+                      disabled={isLoading}
+                      variant="outline"
+                      className="border-nature-200 text-nature-700"
+                    >
+                      <Camera className="mr-2 h-4 w-4" />
+                      Open Camera Scanner
+                    </Button>
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Scan QR Code</h3>
-                  <p className="text-gray-600 mb-6">
-                    Scan the QR code on the waste bin for precise identification
-                  </p>
-                  <Button
-                    onClick={handleQRScan}
-                    disabled={isLoading}
-                    variant="outline"
-                    className="border-nature-200 text-nature-700"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Scanning...
-                      </>
-                    ) : (
-                      <>
-                        <QrCode className="mr-2 h-4 w-4" />
-                        Open Scanner
-                      </>
-                    )}
-                  </Button>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Simulated Camera Interface */}
+                    <div className="relative bg-black rounded-lg p-8 aspect-video">
+                      <div className="absolute inset-4 border-2 border-white/50 rounded-lg">
+                        {/* QR Code Scanning Overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="relative">
+                            {/* Corner indicators */}
+                            <div className="absolute -top-2 -left-2 w-4 h-4 border-l-2 border-t-2 border-green-400"></div>
+                            <div className="absolute -top-2 -right-2 w-4 h-4 border-r-2 border-t-2 border-green-400"></div>
+                            <div className="absolute -bottom-2 -left-2 w-4 h-4 border-l-2 border-b-2 border-green-400"></div>
+                            <div className="absolute -bottom-2 -right-2 w-4 h-4 border-r-2 border-b-2 border-green-400"></div>
+
+                            {/* QR Code placeholder */}
+                            <div className="w-24 h-24 bg-white/20 rounded border border-green-400">
+                              <div className="w-full h-full grid grid-cols-6 gap-px p-1">
+                                {Array.from({ length: 36 }).map((_, i) => (
+                                  <div
+                                    key={i}
+                                    className={`bg-white/60 ${
+                                      Math.random() > 0.5
+                                        ? "opacity-100"
+                                        : "opacity-30"
+                                    }`}
+                                  ></div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Scanning line animation */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-full h-0.5 bg-green-400 animate-pulse"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Camera info */}
+                      <div className="absolute bottom-4 left-4 right-4 text-white text-center">
+                        <div className="flex items-center justify-center mb-2">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <span className="text-sm">
+                            Scanning for QR code...
+                          </span>
+                        </div>
+                        <p className="text-xs opacity-80">
+                          Position the QR code within the frame
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Cancel button */}
+                    <div className="text-center">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsScanning(false);
+                          setIsLoading(false);
+                        }}
+                        className="border-red-200 text-red-700 hover:bg-red-50"
+                      >
+                        Cancel Scan
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
 
