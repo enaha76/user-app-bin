@@ -26,6 +26,9 @@ import {
   Loader2,
   Zap,
 } from "lucide-react";
+import { analyzeWasteImage } from "@/lib/openrouter";
+import { submitWasteReport, getBinStatus } from "@/lib/api";
+import { useUser } from "@/contexts/UserContext";
 
 type ReportStep = "location" | "photo" | "details" | "submit";
 type UrgencyLevel = "low" | "medium" | "high" | "critical";
@@ -57,6 +60,7 @@ const urgencyLevels: Record<
 };
 
 const ReportWaste = () => {
+  const { userId, userWalletId } = useUser();
   const [currentStep, setCurrentStep] = useState<ReportStep>("location");
   const [isLoading, setIsLoading] = useState(false);
   const [detectingLocation, setDetectingLocation] = useState(false);
@@ -138,28 +142,34 @@ const ReportWaste = () => {
     setAnalyzingImage(true);
 
     try {
-      // Create image preview
+      // Create image preview and get base64
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      
+      const imageBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          setUploadedImage(result);
+          resolve(result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-      // Simulate AI analysis
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // Call real AI analysis API
+      toast.info("Analyzing image with AI...");
+      const analysis = await analyzeWasteImage(imageBase64);
 
-      const mockAnalysis = {
-        urgency: "high" as UrgencyLevel,
-        confidence: 89,
-        wasteType: "Mixed waste with recyclables",
-      };
+      if (analysis.confidence === 0) {
+        toast.error("AI analysis failed, using default values");
+      } else {
+        toast.success(`Image analyzed! Confidence: ${analysis.confidence}%`);
+      }
 
-      setAiAnalysis(mockAnalysis);
-      setFormData((prev) => ({ ...prev, urgency: mockAnalysis.urgency }));
-
-      toast.success("Image analyzed successfully!");
+      setAiAnalysis(analysis);
+      setFormData((prev) => ({ ...prev, urgency: analysis.urgency }));
       setCurrentStep("details");
     } catch (error) {
+      console.error("Image upload error:", error);
       toast.error("Failed to analyze image");
     } finally {
       setAnalyzingImage(false);
@@ -170,24 +180,59 @@ const ReportWaste = () => {
     setIsLoading(true);
 
     try {
-      // Simulate blockchain transaction
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Check bin status first
+      toast.info("Checking bin status...");
+      const binStatus = await getBinStatus(formData.binId);
 
-      toast.success("Report submitted successfully! You earned 50 ECO tokens!");
+      if (!binStatus.canReport) {
+        toast.warning("This bin has already been reported as dirty. No reward available.");
+      }
 
-      // Reset form
-      setCurrentStep("location");
-      setFormData({
-        binId: "",
-        location: "",
-        coordinates: { lat: 0, lng: 0 },
-        description: "",
-        urgency: "medium",
+      // Submit report to backend
+      toast.info("Submitting report to blockchain...");
+      const result = await submitWasteReport({
+        binId: formData.binId,
+        userId: userId,
+        userWalletId: userWalletId,
+        location: {
+          address: formData.location,
+          coordinates: formData.coordinates,
+        },
+        imageUrl: uploadedImage || "",
+        aiAnalysis: aiAnalysis || {
+          urgency: formData.urgency,
+          confidence: 0,
+          wasteType: "Unknown",
+        },
+        description: formData.description,
       });
-      setUploadedImage(null);
-      setAiAnalysis(null);
+
+      if (result.success) {
+        if (result.report.isFirstReport && result.report.reward) {
+          toast.success(
+            `🎉 ${result.message}\nTransaction: ${result.report.reward.transactionId.slice(0, 20)}...`
+          );
+        } else {
+          toast.info(result.message);
+        }
+
+        // Reset form
+        setCurrentStep("location");
+        setFormData({
+          binId: "",
+          location: "",
+          coordinates: { lat: 0, lng: 0 },
+          description: "",
+          urgency: "medium",
+        });
+        setUploadedImage(null);
+        setAiAnalysis(null);
+      } else {
+        toast.error("Report submitted but reward distribution failed");
+      }
     } catch (error) {
-      toast.error("Failed to submit report");
+      console.error("Submit error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to submit report");
     } finally {
       setIsLoading(false);
     }
